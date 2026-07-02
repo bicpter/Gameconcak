@@ -14,13 +14,17 @@ echo "===================================="
 echo " Starting GAMECONCAK"
 echo "===================================="
 
-cd "$PROJECT_DIR/docker"
-
-docker compose up -d
+docker compose \
+    --env-file "$PROJECT_DIR/.env" \
+    -f "$PROJECT_DIR/docker/docker-compose.yml" \
+    up -d
 
 echo
 echo "===================================="
 echo " Server Started"
 echo "===================================="
 
-docker compose ps
+docker compose \
+    --env-file "$PROJECT_DIR/.env" \
+    -f "$PROJECT_DIR/docker/docker-compose.yml" \
+    ps

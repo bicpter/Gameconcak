@@ -2,15 +2,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-############################################
-# Enable i386
-############################################
-
 RUN dpkg --add-architecture i386
-
-############################################
-# Install dependencies
-############################################
 
 RUN apt update && apt install -y \
     curl \
@@ -23,11 +15,7 @@ RUN apt update && apt install -y \
     libstdc++6:i386 \
     libgcc-s1:i386 \
     libcurl4:i386 \
-    steamcmd
-
-############################################
-# Create directories
-############################################
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p \
     /data \
@@ -36,21 +24,23 @@ RUN mkdir -p \
     /secrets \
     /logs \
     /server \
-    /docker
+    /docker \
+    /steamcmd
 
-############################################
-# Copy startup scripts
-############################################
+WORKDIR /steamcmd
+
+RUN wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+    && tar -xzf steamcmd_linux.tar.gz \
+    && rm steamcmd_linux.tar.gz
+
+RUN printf '#!/bin/sh\ncd /steamcmd\nexec ./steamcmd.sh "$@"\n' > /usr/local/bin/steamcmd \
+    && chmod +x /usr/local/bin/steamcmd
 
 COPY docker/entrypoint.sh /docker/entrypoint.sh
 COPY docker/start-master.sh /docker/start-master.sh
 COPY docker/start-caves.sh /docker/start-caves.sh
 
 RUN chmod +x /docker/*.sh
-
-############################################
-# Working directory
-############################################
 
 WORKDIR /server
 

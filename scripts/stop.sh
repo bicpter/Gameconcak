@@ -14,9 +14,10 @@ echo "===================================="
 echo " Stopping GAMECONCAK"
 echo "===================================="
 
-cd "$PROJECT_DIR/docker"
-
-docker compose down
+docker compose \
+    --env-file "$PROJECT_DIR/.env" \
+    -f "$PROJECT_DIR/docker/docker-compose.yml" \
+    down
 
 echo
 echo "===================================="
