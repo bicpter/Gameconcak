@@ -1,31 +1,109 @@
 #!/bin/bash
 set -e
 
+############################################
+# GAMECONCAK Bootstrap
+############################################
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+TOKEN_FILE="$PROJECT_DIR/secrets/cluster_token.txt"
+TOKEN_EXAMPLE="$PROJECT_DIR/secrets/cluster_token.txt.example"
 
 echo "===================================="
 echo " GAMECONCAK Bootstrap"
 echo "===================================="
 
-echo "[1/5] Installing host dependencies..."
-bash "$PROJECT_DIR/scripts/install.sh"
+############################################
+# Check Cluster Token
+############################################
 
-echo "[2/5] Updating DST server..."
-"$PROJECT_DIR/scripts/update.sh"
+if [ ! -f "$TOKEN_FILE" ]; then
 
-echo "[3/5] Installing mods..."
-"$PROJECT_DIR/scripts/install-mods.sh"
+    echo
+    echo "ERROR: Missing cluster token!"
+    echo
+    echo "Please run:"
+    echo
+    echo "cp \"$TOKEN_EXAMPLE\" \"$TOKEN_FILE\""
+    echo
+    echo "Then edit:"
+    echo
+    echo "nano \"$TOKEN_FILE\""
+    echo
+    echo "Paste your Klei Cluster Token and run bootstrap again."
+    exit 1
 
-echo "[4/5] Running health check..."
-"$PROJECT_DIR/scripts/check.sh"
+fi
 
-echo "[5/5] Starting server..."
-"$PROJECT_DIR/scripts/start.sh"
+############################################
+# Install Host
+############################################
 
 echo
-echo "===================================="
-echo " Bootstrap completed"
-echo "===================================="
+echo "[1/6] Installing host dependencies..."
+"$PROJECT_DIR/scripts/install.sh"
 
-"$PROJECT_DIR/scripts/status.sh"
+############################################
+# Build Docker Image
+############################################
+
+echo
+echo "[2/6] Building Docker image..."
+"$PROJECT_DIR/scripts/build.sh"
+
+############################################
+# Update DST
+############################################
+
+echo
+echo "[3/6] Updating DST Dedicated Server..."
+"$PROJECT_DIR/scripts/update.sh"
+
+############################################
+# Install Mods
+############################################
+
+echo
+echo "[4/6] Installing Mods..."
+"$PROJECT_DIR/scripts/install-mods.sh"
+
+############################################
+# Start Server
+############################################
+
+echo
+echo "[5/6] Starting Server..."
+"$PROJECT_DIR/scripts/start.sh"
+
+############################################
+# Health Check
+############################################
+
+echo
+echo "[6/6] Running Health Check..."
+
+if "$PROJECT_DIR/scripts/check.sh"; then
+
+    echo
+    echo "===================================="
+    echo " Bootstrap Completed Successfully!"
+    echo "===================================="
+    echo
+
+    "$PROJECT_DIR/scripts/status.sh"
+
+else
+
+    echo
+    echo "===================================="
+    echo " Bootstrap Failed!"
+    echo "===================================="
+    echo
+    echo "Check server logs with:"
+    echo
+    echo "./scripts/logs.sh"
+    exit 1
+
+fi

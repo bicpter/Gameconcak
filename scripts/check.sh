@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+############################################
+# GAMECONCAK Health Check
+############################################
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -36,7 +40,10 @@ echo "===================================="
 echo " GAMECONCAK Health Check"
 echo "===================================="
 
+############################################
 # Docker
+############################################
+
 if command -v docker >/dev/null 2>&1; then
     ok "Docker installed"
 else
@@ -49,86 +56,147 @@ else
     fail "Docker Compose not found"
 fi
 
-# Required files
-[ -f "$PROJECT_DIR/.env" ] && ok ".env exists" || fail ".env missing"
-[ -f "$COMPOSE_FILE" ] && ok "docker-compose.yml exists" || fail "docker-compose.yml missing"
-[ -f "$PROJECT_DIR/docker/Dockerfile" ] && ok "Dockerfile exists" || fail "Dockerfile missing"
+############################################
+# Project Files
+############################################
 
-# Config files
-[ -f "$CONFIG_DIR/cluster.ini" ] && ok "cluster.ini exists" || fail "cluster.ini missing"
-[ -f "$CONFIG_DIR/Master/server.ini" ] && ok "Master/server.ini exists" || fail "Master/server.ini missing"
-[ -f "$CONFIG_DIR/Caves/server.ini" ] && ok "Caves/server.ini exists" || fail "Caves/server.ini missing"
-[ -f "$CONFIG_DIR/Master/worldgenoverride.lua" ] && ok "Master/worldgenoverride.lua exists" || fail "Master/worldgenoverride.lua missing"
-[ -f "$CONFIG_DIR/Caves/worldgenoverride.lua" ] && ok "Caves/worldgenoverride.lua exists" || fail "Caves/worldgenoverride.lua missing"
+[ -f "$PROJECT_DIR/.env" ] && ok ".env" || fail ".env missing"
 
-# Token
-if [ -f "$TOKEN_FILE" ]; then
-    if grep -q "PUT_YOUR" "$TOKEN_FILE"; then
-        fail "cluster_token.txt still contains placeholder"
+[ -f "$COMPOSE_FILE" ] && ok "docker-compose.yml" || fail "docker-compose.yml missing"
+
+[ -f "$PROJECT_DIR/docker/Dockerfile" ] && ok "Dockerfile" || fail "Dockerfile missing"
+
+############################################
+# Config
+############################################
+
+FILES=(
+    "$CONFIG_DIR/cluster.ini"
+    "$CONFIG_DIR/Master/server.ini"
+    "$CONFIG_DIR/Master/worldgenoverride.lua"
+    "$CONFIG_DIR/Master/modoverrides.lua"
+    "$CONFIG_DIR/Caves/server.ini"
+    "$CONFIG_DIR/Caves/worldgenoverride.lua"
+    "$CONFIG_DIR/Caves/modoverrides.lua"
+)
+
+for FILE in "${FILES[@]}"
+do
+    if [ -f "$FILE" ]; then
+        ok "$FILE"
     else
-        ok "cluster_token.txt exists"
+        fail "$FILE"
     fi
-else
+done
+
+############################################
+# Token
+############################################
+
+if [ ! -f "$TOKEN_FILE" ]; then
+
     fail "cluster_token.txt missing"
-fi
 
-# DST server binary
-if [ -f "$SERVER_DIR/bin64/dontstarve_dedicated_server_nullrenderer_x64" ]; then
-    ok "DST server binary exists"
 else
-    warn "DST server not installed yet. Run ./scripts/update.sh"
+
+    TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
+
+    if [ -z "$TOKEN" ]; then
+
+        fail "cluster_token.txt is empty"
+
+    elif [[ "$TOKEN" == "PUT_YOUR_KLEI_CLUSTER_TOKEN_HERE" ]]; then
+
+        fail "cluster_token.txt contains example value"
+
+    else
+
+        ok "cluster_token.txt"
+
+    fi
+
 fi
 
-# Mods
-if [ -f "$MODS_FILE" ]; then
-    ok "mods.txt exists"
+############################################
+# DST Server
+############################################
 
-    while IFS= read -r LINE; do
+if [ -f "$SERVER_DIR/bin64/dontstarve_dedicated_server_nullrenderer_x64" ]; then
+    ok "DST Dedicated Server"
+else
+    warn "DST Dedicated Server not installed"
+fi
+
+############################################
+# Mods
+############################################
+
+if [ -f "$MODS_FILE" ]; then
+
+    ok "mods.txt"
+
+    while IFS= read -r LINE
+    do
+
         MOD_ID="$(echo "$LINE" | tr -d '[:space:]')"
 
         [[ -z "$MOD_ID" ]] && continue
         [[ "$MOD_ID" =~ ^# ]] && continue
 
-        if [ -f "$SERVER_DIR/mods/workshop-$MOD_ID/modinfo.lua" ]; then
-            ok "Mod workshop-$MOD_ID installed"
-        else
-            warn "Mod workshop-$MOD_ID not installed"
-        fi
+        ok "workshop-$MOD_ID"
+
     done < "$MODS_FILE"
+
 else
-    warn "mods.txt missing"
+
+    fail "mods.txt missing"
+
 fi
 
-# Runtime cluster
+############################################
+# Runtime
+############################################
+
 if [ -d "$CLUSTER_RUNTIME_DIR" ]; then
-    ok "Runtime cluster exists"
+    ok "Cluster Runtime"
 else
-    warn "Runtime cluster not created yet"
+    warn "Cluster Runtime not created"
 fi
 
-# Docker containers
-if command -v docker >/dev/null 2>&1; then
-    if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_MASTER}$"; then
-        ok "$CONTAINER_MASTER running"
-    else
-        warn "$CONTAINER_MASTER not running"
-    fi
+############################################
+# Containers
+############################################
 
-    if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_CAVES}$"; then
-        ok "$CONTAINER_CAVES running"
-    else
-        warn "$CONTAINER_CAVES not running"
-    fi
+if docker ps --format '{{.Names}}' | grep -qx "$CONTAINER_MASTER"; then
+    ok "$CONTAINER_MASTER running"
+else
+    warn "$CONTAINER_MASTER stopped"
 fi
+
+if docker ps --format '{{.Names}}' | grep -qx "$CONTAINER_CAVES"; then
+    ok "$CONTAINER_CAVES running"
+else
+    warn "$CONTAINER_CAVES stopped"
+fi
+
+############################################
+# Summary
+############################################
 
 echo
 echo "===================================="
 echo " Summary"
 echo "===================================="
-echo "OK:   $PASS"
-echo "WARN: $WARN"
-echo "FAIL: $FAIL"
+
+echo "PASS : $PASS"
+echo "WARN : $WARN"
+echo "FAIL : $FAIL"
+
+echo
 
 if [ "$FAIL" -gt 0 ]; then
+    echo "Health Check FAILED."
     exit 1
 fi
+
+echo "Health Check PASSED."
