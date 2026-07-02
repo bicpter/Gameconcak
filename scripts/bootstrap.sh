@@ -9,32 +9,67 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 TOKEN_FILE="$PROJECT_DIR/secrets/cluster_token.txt"
-TOKEN_EXAMPLE="$PROJECT_DIR/secrets/cluster_token.txt.example"
 
 echo "===================================="
 echo " GAMECONCAK Bootstrap"
 echo "===================================="
 
 ############################################
-# Check Cluster Token
+# Prepare Token
 ############################################
 
+mkdir -p "$PROJECT_DIR/secrets"
+
 if [ ! -f "$TOKEN_FILE" ]; then
+    echo
+    echo "Cluster token not found."
+    echo "Paste your Klei Cluster Token below:"
+    echo
 
-    echo
-    echo "ERROR: Missing cluster token!"
-    echo
-    echo "Please run:"
-    echo
-    echo "cp \"$TOKEN_EXAMPLE\" \"$TOKEN_FILE\""
-    echo
-    echo "Then edit:"
-    echo
-    echo "nano \"$TOKEN_FILE\""
-    echo
-    echo "Paste your Klei Cluster Token and run bootstrap again."
-    exit 1
+    while true
+    do
+        read -r -p "Cluster Token: " TOKEN
 
+        TOKEN="$(echo "$TOKEN" | tr -d '[:space:]')"
+
+        if [ -n "$TOKEN" ]; then
+            echo "$TOKEN" > "$TOKEN_FILE"
+            chmod 600 "$TOKEN_FILE"
+            echo
+            echo "Token saved to secrets/cluster_token.txt"
+            break
+        fi
+
+        echo "Token cannot be empty. Try again."
+    done
+else
+    TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"
+
+    if [ -z "$TOKEN" ] || [ "$TOKEN" = "PUT_YOUR_KLEI_CLUSTER_TOKEN_HERE" ]; then
+        echo
+        echo "Invalid or placeholder token found."
+        echo "Paste your Klei Cluster Token below:"
+        echo
+
+        while true
+        do
+            read -r -p "Cluster Token: " TOKEN
+
+            TOKEN="$(echo "$TOKEN" | tr -d '[:space:]')"
+
+            if [ -n "$TOKEN" ] && [ "$TOKEN" != "PUT_YOUR_KLEI_CLUSTER_TOKEN_HERE" ]; then
+                echo "$TOKEN" > "$TOKEN_FILE"
+                chmod 600 "$TOKEN_FILE"
+                echo
+                echo "Token updated."
+                break
+            fi
+
+            echo "Token cannot be empty or placeholder. Try again."
+        done
+    else
+        echo "Cluster token found."
+    fi
 fi
 
 ############################################
@@ -85,7 +120,6 @@ echo
 echo "[6/6] Running Health Check..."
 
 if "$PROJECT_DIR/scripts/check.sh"; then
-
     echo
     echo "===================================="
     echo " Bootstrap Completed Successfully!"
@@ -93,9 +127,7 @@ if "$PROJECT_DIR/scripts/check.sh"; then
     echo
 
     "$PROJECT_DIR/scripts/status.sh"
-
 else
-
     echo
     echo "===================================="
     echo " Bootstrap Failed!"
@@ -105,5 +137,4 @@ else
     echo
     echo "./scripts/logs.sh"
     exit 1
-
 fi
