@@ -1,0 +1,26 @@
+# Secrets
+secrets/cluster_token.txt
+data/cluster/DoNotStarveTogether/*/cluster_token.txt
+
+# Runtime data
+data/cluster/
+data/server/
+data/logs/
+
+# Backups
+backups/
+backup/
+*.tar.gz
+*.zip
+
+# Logs
+*.log
+
+# Local env
+.env.local
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

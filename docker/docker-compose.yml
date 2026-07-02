@@ -1,0 +1,32 @@
+services:
+  dst-master:
+    container_name: dst-master
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - ../.env
+    volumes:
+      - ../data:/data
+      - ../config:/config
+      - ../secrets:/secrets
+      - ../mods:/mods
+    command: /docker/start-master.sh
+
+  dst-caves:
+    container_name: dst-caves
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - ../.env
+    volumes:
+      - ../data:/data
+      - ../config:/config
+      - ../secrets:/secrets
+      - ../mods:/mods
+    command: /docker/start-caves.sh

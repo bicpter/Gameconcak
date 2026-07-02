@@ -1,0 +1,15 @@
+.git
+.vscode
+.idea
+
+data
+backups
+secrets
+
+*.log
+*.tar.gz
+*.zip
+
+README.md
+CHANGELOG.md
+LICENSE

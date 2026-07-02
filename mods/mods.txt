@@ -1,0 +1,37 @@
+############################################################
+# Don't Starve Together Workshop Mods
+#
+# One Workshop ID per line.
+#
+# Lines starting with # are ignored.
+# Empty lines are ignored.
+#
+# Example:
+#
+# 378160973
+# 3625456699
+#
+############################################################
+
+# ==========================
+# Utility Mods
+# ==========================
+
+# Global Positions
+378160973
+
+# Insight
+3625456699
+
+# ==========================
+# Building Mods
+# ==========================
+
+# Geometric Placement
+351325790
+
+# ==========================
+# UI Mods
+# ==========================
+
+# (Add your mods below)
