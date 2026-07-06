@@ -14,10 +14,17 @@ echo "===================================="
 echo " Starting GAMECONCAK"
 echo "===================================="
 
-docker compose \
-    --env-file "$PROJECT_DIR/.env" \
-    -f "$PROJECT_DIR/docker/docker-compose.yml" \
-    up -d
+if [ "${ENABLE_CAVES:-true}" = "true" ]; then
+    docker compose \
+        --env-file "$PROJECT_DIR/.env" \
+        -f "$PROJECT_DIR/docker/docker-compose.yml" \
+        up -d
+else
+    docker compose \
+        --env-file "$PROJECT_DIR/.env" \
+        -f "$PROJECT_DIR/docker/docker-compose.yml" \
+        up -d dst-master
+fi
 
 echo
 echo "===================================="
