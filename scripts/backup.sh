@@ -32,8 +32,27 @@ echo "Creating backup..."
 tar -czf "$BACKUP_FILE" -C "$PROJECT_DIR/data" cluster
 
 echo
-echo "Backup completed!"
-echo
-echo "$BACKUP_FILE"
+echo "Cleaning old backups (keep latest 5)..."
 
-ls -lh "$BACKUP_FILE"
+find "$BACKUP_DIR" \
+    -maxdepth 1 \
+    -type f \
+    -name "dst-backup-*.tar.gz" \
+    | sort -r \
+    | tail -n +6 \
+    | xargs -r rm -f
+
+echo
+echo "===================================="
+echo " Backup Completed"
+echo "===================================="
+echo
+echo "Backup file:"
+echo "  $BACKUP_FILE"
+echo
+echo "Size:"
+du -sh "$BACKUP_FILE"
+
+echo
+echo "Current backups:"
+ls -lh "$BACKUP_DIR"/dst-backup-*.tar.gz
